@@ -71,7 +71,7 @@ WELCOME_LINES = [
     "{m}, t’es officiellement membre de la team Miri ✨",
     "Hey {m} ! Dépose ton sac, prends un siège et profite.",
     "Salut {m} ! Ici on rigole, on débat et on chill. T’es prêt·e ?",
-    "Ravi·e de t’avoir {m} parmi nous n'hésite pas à faire parti de l'équipe staff ! 🚀",
+    "Ravi·e de t’avoir {m} ! 🚀",
     "Ohhh {m} débarque dans la place 🔥",
     "Bienvenue {m}, évite juste de faire le clown sinon tu vas goûter à mes vannes.",
     "Mdr {m} t’as spawn ici, chanceux·se 😎",
@@ -79,20 +79,13 @@ WELCOME_LINES = [
     "Hey {m}, prépare-toi aux blagues nulles et aux débats inutiles 😂",
     "Bienvenue {m} dans le repaire secret de Miri.",
     "Oh {m} 👀 Un nouveau visage, ça fait plaisir.",
+    "{m} a rejoint le game 🕹️",
     "Bienvenue {m}, le serveur est un peu bizarre mais tu vas kiffer.",
+    "Yo {m} ✨ Mets-toi bien, ici c’est freestyle.",
     "Bien ou quoi {m} ?! Bienvenue chez les zinzins.",
     "Bienvenue {m}, on t’a gardé une place au coin 🔥",
     "Heeey {m} ! Attention je retiens les noms 👀",
     "Oh non… {m} est là 😱 (j’rigole, bienvenue !)",
-    "Wsh {m} ! Pose-toi, t’es chez toi.",
-    "Tadaaa {m} vient de spawn ✨",
-    "Bienvenue {m}, évite juste de spam sinon je deviens méchante 😇",
-    "{m}… un de plus dans la secte 😏",
-    "Yo {m}, bienvenue dans ce joyeux bazar.",
-    "Bienvenue {m}, tu verras, ici c’est comme Netflix mais gratuit.",
-    "Salut {m}, t’as signé pour du fun (et quelques trolls).",
-    "Bienvenue {m}, accroche-toi ça va secouer 🚀",
-    "Oh {m}, j’espère que t’as de l’humour sinon ça va être compliqué."
 ]
 
 def ticket_line() -> str | None:
@@ -119,15 +112,6 @@ async def send_welcome(member: discord.Member):
     msg = f"{base}{extra}"
     await ch.send(msg)
 
-# ========= EVENTS =========
-@bot.event
-async def on_ready():
-    try:
-        synced = await bot.tree.sync()
-        print(f"[READY] {bot.user} connecté | {len(synced)} slash cmds")
-    except Exception as e:
-        print(f"[READY] sync fail: {e}")
-
 @bot.event
 async def on_member_join(member: discord.Member):
     await send_welcome(member)
@@ -142,14 +126,95 @@ async def welcometest(interaction: discord.Interaction, member: discord.Member |
 
 bot.tree.add_command(welcometest)
 
+# ========= AMBIENT LIMITS =========
+AMBIENT_ENABLED = os.getenv("AMBIENT_ENABLED", "true").lower() == "true"
+AMBIENT_PROBABILITY = float(os.getenv("AMBIENT_PROBABILITY", "0.15"))
+AMBIENT_GLOBAL_COOLDOWN_H = int(os.getenv("AMBIENT_GLOBAL_COOLDOWN_H", "12"))
+AMBIENT_CHANNEL_COOLDOWN_MIN = int(os.getenv("AMBIENT_CHANNEL_COOLDOWN_MIN", "45"))
+AMBIENT_DAILY_MAX = int(os.getenv("AMBIENT_DAILY_MAX", "3"))
+
+_last_user_reply = {}
+_last_ambient_global = None
+_last_ambient_channel = {}
+_ambient_day_count = {}
+USER_COOLDOWN_S = 6
+
+def _is_short_question(text: str) -> bool:
+    t = text.strip()
+    if len(t) > 120:
+        return False
+    return t.endswith("?")
+
+def _talks_about_miri(content: str) -> bool:
+    return bool(re.search(r"\bmiri\b", content.lower()))
+
+def can_ambient_reply(guild_id: int, channel_id: int) -> bool:
+    global _last_ambient_global, _last_ambient_channel, _ambient_day_count
+    if not AMBIENT_ENABLED:
+        return False
+    now = datetime.datetime.utcnow()
+    today = now.date().isoformat()
+
+    # global cooldown
+    if _last_ambient_global and (now - _last_ambient_global) < datetime.timedelta(hours=AMBIENT_GLOBAL_COOLDOWN_H):
+        return False
+
+    # daily cap
+    if _ambient_day_count.get(today, 0) >= AMBIENT_DAILY_MAX:
+        return False
+
+    # channel cooldown
+    last_c = _last_ambient_channel.get(channel_id)
+    if last_c and (now - last_c) < datetime.timedelta(minutes=AMBIENT_CHANNEL_COOLDOWN_MIN):
+        return False
+
+    # probabilité
+    return random.random() < AMBIENT_PROBABILITY
+
+def mark_ambient_used(channel_id: int):
+    global _last_ambient_global, _last_ambient_channel, _ambient_day_count
+    now = datetime.datetime.utcnow()
+    today = now.date().isoformat()
+    _last_ambient_global = now
+    _last_ambient_channel[channel_id] = now
+    _ambient_day_count[today] = _ambient_day_count.get(today, 0) + 1
+
 # ========= REACTIONS IA =========
 @bot.event
 async def on_message(message: discord.Message):
     if message.author.bot or not message.guild:
         return
-    if bot.user and (bot.user in message.mentions or message.reference):
+
+    now = datetime.datetime.utcnow().timestamp()
+    if _last_user_reply.get(message.author.id, 0) + USER_COOLDOWN_S > now:
+        return
+
+    should_reply, force = False, False
+
+    # ping explicite
+    if bot.user and bot.user in message.mentions:
+        should_reply, force = True, True
+    # reply à Miri
+    elif message.reference and message.reference.message_id:
+        try:
+            ref = await message.channel.fetch_message(message.reference.message_id)
+            if ref.author and bot.user and ref.author.id == bot.user.id:
+                should_reply, force = True, True
+        except Exception:
+            pass
+    # ambiant
+    else:
+        if _talks_about_miri(message.content) or _is_short_question(message.content):
+            if can_ambient_reply(message.guild.id, message.channel.id):
+                should_reply = True
+
+    if should_reply:
+        _last_user_reply[message.author.id] = now
         reply = await ai_reply(message.clean_content)
         await message.reply(reply)
+        if not force:
+            mark_ambient_used(message.channel.id)
+
     await bot.process_commands(message)
 
 # ========= RUN =========
