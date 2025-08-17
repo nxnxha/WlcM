@@ -287,7 +287,7 @@ async def ai_reply(user_msg: str, guild: discord.Guild, author: discord.abc.User
 
 # ====== SALON CALME & COOLDOWNS PING-BANTER ======
 async def channel_is_quiet(channel: discord.TextChannel) -> bool:
-    \"\"\"True si peu d’activité récente.\"\"\"
+    """True si peu d’activité récente."""
     now = discord.utils.utcnow()
     cutoff = now - timedelta(minutes=QUIET_WINDOW_MIN)
     count_recent = 0
