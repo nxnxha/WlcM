@@ -78,7 +78,7 @@ WELCOME_LINES = [
     "Yo {m}, prends tes aises, le chaos commence.",
     "Hey {m}, prépare-toi aux blagues nulles et aux débats inutiles 😂",
     "Bienvenue {m} dans le repaire secret de Miri.",
-    "Oh {m} 👀 Un nouveau visage, ça fait plaisir."
+    "Oh {m} 👀 Un nouveau visage, ça fait plaisir.",
     "Bienvenue {m}, le serveur est un peu bizarre mais tu vas kiffer.",
     "Yo {m} ✨ Mets-toi bien, ici c’est freestyle.",
     "Bien ou quoi {m} ?! Bienvenue chez les zinzins.",
