@@ -5,8 +5,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from datetime import timedelta
-import datetime  # ✅ manquant
-import re        # ✅ manquant
+import datetime
+import re
 
 # ========= ENV =========
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
@@ -172,16 +172,20 @@ async def on_message(message: discord.Message):
     if message.author.bot or not message.guild:
         return
 
-    # --- Ping direct requis pour une réponse "assurée"
-    is_direct_ping = bot.user and (
-        bot.user in message.mentions
-        or f"<@{bot.user.id}>" in message.content
-        or f"<@!{bot.user.id}>" in message.content
-    )
+    # --- est-ce une reply ? ---
+    is_reply = (message.type == discord.MessageType.reply) or (message.reference is not None)
 
-    # --- Est-ce un reply à un message de Miri ?
+    # --- ping explicite tapé dans le contenu (pas le ping auto des replies) ---
+    def _explicit_ping(txt: str) -> bool:
+        if not bot.user:
+            return False
+        return (f"<@{bot.user.id}>" in txt) or (f"<@!{bot.user.id}>" in txt)
+
+    has_explicit_ping = _explicit_ping(message.content)
+
+    # --- est-ce que la reply cible un message de Miri ? ---
     is_reply_to_miri = False
-    if message.reference and message.reference.message_id:
+    if is_reply and message.reference and getattr(message.reference, "message_id", None):
         ref = getattr(message.reference, "resolved", None)
         if ref is None:
             try:
@@ -191,21 +195,25 @@ async def on_message(message: discord.Message):
         if ref and ref.author and bot.user and ref.author.id == bot.user.id:
             is_reply_to_miri = True
 
-    # ✅ NE RÉPOND PAS AUX REPLIES À MIRI, SAUF SI PING
-    if is_reply_to_miri and not is_direct_ping:
+    # 🔕 ignore toute reply auto à Miri, sauf si ping explicite
+    if is_reply_to_miri and not has_explicit_ping:
         await bot.process_commands(message)
         return
 
-    # ✅ Si on ping Miri, elle répond toujours (même si cooldown/ambiant)
-    if is_direct_ping:
+    # 📣 Si ping explicite → répondre toujours
+    if has_explicit_ping:
         reply = await ai_reply(message.clean_content)
         await message.reply(reply, mention_author=False)
         _last_user_reply[message.author.id] = datetime.datetime.utcnow().timestamp()
         await bot.process_commands(message)
         return
 
-    # --- Mode ambiant (petites interventions, jamais en reply à Miri)
+    # --- Mode ambiant (jamais en reply) ---
     now_ts = datetime.datetime.utcnow().timestamp()
+    if is_reply:
+        await bot.process_commands(message)
+        return
+
     if _last_user_reply.get(message.author.id, 0) + USER_COOLDOWN_S > now_ts:
         await bot.process_commands(message)
         return
