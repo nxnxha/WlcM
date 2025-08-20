@@ -177,12 +177,6 @@ async def on_message(message: discord.Message):
         or f"<@!{bot.user.id}>" in message.content
     )
 
-    if is_direct_ping 
-        reply = await ai_reply(message.clean_content)
-        await message.reply(reply)
-        await bot.process_commands(message)
-        return
-
     # --- Mode ambiant ---
     now = datetime.datetime.utcnow().timestamp()
     if _last_user_reply.get(message.author.id, 0) + USER_COOLDOWN_S > now:
