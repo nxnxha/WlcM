@@ -5,6 +5,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from datetime import timedelta
+import datetime  # ✅ manquant
+import re        # ✅ manquant
 
 # ========= ENV =========
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
@@ -170,16 +172,42 @@ async def on_message(message: discord.Message):
     if message.author.bot or not message.guild:
         return
 
-    # --- Ping ou reply direct à Miri → réponse toujours ---
+    # --- Ping direct requis pour une réponse "assurée"
     is_direct_ping = bot.user and (
         bot.user in message.mentions
         or f"<@{bot.user.id}>" in message.content
         or f"<@!{bot.user.id}>" in message.content
     )
 
-    # --- Mode ambiant ---
-    now = datetime.datetime.utcnow().timestamp()
-    if _last_user_reply.get(message.author.id, 0) + USER_COOLDOWN_S > now:
+    # --- Est-ce un reply à un message de Miri ?
+    is_reply_to_miri = False
+    if message.reference and message.reference.message_id:
+        ref = getattr(message.reference, "resolved", None)
+        if ref is None:
+            try:
+                ref = await message.channel.fetch_message(message.reference.message_id)
+            except Exception:
+                ref = None
+        if ref and ref.author and bot.user and ref.author.id == bot.user.id:
+            is_reply_to_miri = True
+
+    # ✅ NE RÉPOND PAS AUX REPLIES À MIRI, SAUF SI PING
+    if is_reply_to_miri and not is_direct_ping:
+        await bot.process_commands(message)
+        return
+
+    # ✅ Si on ping Miri, elle répond toujours (même si cooldown/ambiant)
+    if is_direct_ping:
+        reply = await ai_reply(message.clean_content)
+        await message.reply(reply, mention_author=False)
+        _last_user_reply[message.author.id] = datetime.datetime.utcnow().timestamp()
+        await bot.process_commands(message)
+        return
+
+    # --- Mode ambiant (petites interventions, jamais en reply à Miri)
+    now_ts = datetime.datetime.utcnow().timestamp()
+    if _last_user_reply.get(message.author.id, 0) + USER_COOLDOWN_S > now_ts:
+        await bot.process_commands(message)
         return
 
     def _is_short_question(text: str) -> bool:
@@ -192,9 +220,9 @@ async def on_message(message: discord.Message):
     ambient_trigger = _talks_about_miri(message.content) or _is_short_question(message.content)
 
     if ambient_trigger and can_ambient_reply(message.guild.id, message.channel.id):
-        _last_user_reply[message.author.id] = now
+        _last_user_reply[message.author.id] = now_ts
         reply = await ai_reply(message.clean_content)
-        await message.reply(reply)
+        await message.reply(reply, mention_author=False)
         mark_ambient_used(message.channel.id)
 
     await bot.process_commands(message)
