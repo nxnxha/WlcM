@@ -176,16 +176,8 @@ async def on_message(message: discord.Message):
         or f"<@{bot.user.id}>" in message.content
         or f"<@!{bot.user.id}>" in message.content
     )
-    is_reply_to_miri = False
-    if message.reference and message.reference.message_id:
-        try:
-            ref = await message.channel.fetch_message(message.reference.message_id)
-            if ref.author and bot.user and ref.author.id == bot.user.id:
-                is_reply_to_miri = True
-        except Exception:
-            pass
 
-    if is_direct_ping or is_reply_to_miri:
+    if is_direct_ping 
         reply = await ai_reply(message.clean_content)
         await message.reply(reply)
         await bot.process_commands(message)
