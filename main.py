@@ -68,25 +68,33 @@ async def ai_reply(user_text: str) -> str:
 
 # ========= BIENVENUE =========
 WELCOME_LINES = [
-    "Bienvenue {m} ! T’as trouvé la planque la plus stylée.",
-    "Yo {m} 👋 On t’attendait, t’as intérêt à mettre l’ambiance sinon dehors.",
+    "Bienvenue {m} dans notre petite safe place.",
+    "Yo {m} t’as intérêt à mettre l’ambiance sinon c'est dehoooors.",
+    "Oh non....{m} a rejoint, qui l'a invité sérieux ? <:cringe:1417180989775679600>",
     "{m}, t’es officiellement membre de la team Miri deviens vite un staff",
-    "Hey {m} ! T'es le bienvenu à condition que tu sois un modo discord.",
-    "Salut {m} ! Ici on rigole, on débat et on chill. Parle avec nous !",
+    "Hey {m} ! T'es le bienvenu à condition que tu sois un vrai modo discord.",
+    "Salut {m} ! Ici on rigole, on débat et on chill. Parle avec nous et ne soit pas timide !",
     "Ravi·e de t’avoir {m} parmis nous, en espèrant que tu sois pas juste un jnoun de passage.",
-    "Ohhh {m} débarque dans la place !",
-    "Bienvenue {m} !",
-    "Mdr {m} t’as spawn ici, t'as intêret à être remarquable.",
+    "Ohhh {m} débarque dans le serveur et on peut dire qu'il prend de la place !",
+    "Bienvenue {m}",
+    "Salem {m} t'as mangé quoi aujourd'hui?"
+    "Mais non !!! {m} t’es le nouveau clown du serveur ?? <a:Clown_miri:1402010320683270234>",
+    "Bienvenue {m} , on te met au défi de pas être autant inutile que le dernier arrivé.",
     "Yo {m}, prends tes aises, le chaos commence.",
-    "Hey {m}, prépare-toi aux blagues nulles et aux débats inutiles 😂",
+    "Active ton micro {m} et prépare toi à être notre nouveau souffre douleur, soit pas timide hihi.",
+    "Hey {m}, prépare-toi aux blagues nulles et aux débats inutiles... ",
     "Bienvenue {m} dans le repaire secret de Miri.",
-    "Oh {m} 👀 Un nouveau visage, ça fait plaisir.",
+    "Oh {m} un nouveau visage, ça fait plaisir.",
     "Bienvenue {m}, le serveur est un peu bizarre mais tu vas kiffer.",
-    "Yo {m} ✨ Mets-toi bien, ici c’est freestyle.",
-    "Bien ou quoi {m} ?! Bienvenue chez les zinzins.",
-    "Bienvenue {m}, on t’a gardé une place au coin 🔥",
-    "Heeey {m} ! Attention je retiens les noms 👀",
-    "Oh non… {m} est là 😱 (j’rigole, bienvenue !)",
+    "Bien ou quoi {m} ?! Bienvenue dans l'hôpital psychiatrique Miri.",
+    "Bienvenue {m}, on t’a gardé une place au coin !",
+    "Heeey {m} ! Attention je vais te surveiller de très près...",
+    "Oh non… {m} est là 😱 (j’rigole.. ou pas mais, bienvenue )",
+    "T'as deux options ici {m}, soit t'es drôle soit t'es kick. Quel est ton choix?",
+    " Bienvenue {m} n'hésites pas à t'inscrire au Casino https://discordapp.com/channels/1382730341944397967/1402211773905375313 et à tous les tabasser !",
+    " Ohhhh {m} si tu as plus de 18 ans n'hésites pas à rejoindre https://discordapp.com/channels/1382730341944397967/1400808431941849178 il y aura des events de folies !",
+    " Hmmm {m} un gros puant comme on les aime",
+    "Si tu clc {m} dehorssssssss !!"
 ]
 
 def ticket_line() -> str | None:
