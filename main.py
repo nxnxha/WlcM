@@ -77,7 +77,7 @@ WELCOME_LINES = [
     "Ravi·e de t’avoir {m} parmis nous, en espèrant que tu sois pas juste un jnoun de passage.",
     "Ohhh {m} débarque dans le serveur et on peut dire qu'il prend de la place !",
     "Bienvenue {m}",
-    "Salem {m} t'as mangé quoi aujourd'hui?"
+    "Salem {m} t'as mangé quoi aujourd'hui?",
     "Mais non !!! {m} t’es le nouveau clown du serveur ?? <a:Clown_miri:1402010320683270234>",
     "Bienvenue {m} , on te met au défi de pas être autant inutile que le dernier arrivé.",
     "Yo {m}, prends tes aises, le chaos commence.",
